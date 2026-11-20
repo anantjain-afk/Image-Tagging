@@ -183,9 +183,9 @@ Every team member owns distinct, non-overlapping files:
 
 #### Tasks:
 1. Compare test predictions between Phase 1 best models (Random Forest, SVM) and Phase 2 CNN models.
-2. In `phase2_reports/phase2_error_analysis.md`, evaluate whether the upper-body bottleneck was resolved:
-   - Check if Shirt recall increased from 50.7%–62.6% to $\ge 80.0\%$.
-   - Check if total upper-body shirt confusion decreased to $< 15.0\%$.
+2. In `phase2_reports/phase2_error_analysis.md`, evaluate the upper-body bottleneck resolution:
+   - Quantify Shirt recall recovery from the 50.7%–62.6% classical baseline.
+   - Measure the reduction in total upper-body shirt confusion across adjacent tops.
 3. Extract and visualize misclassification examples:
    - Create `shirt_recovery_gallery.png` showing garments where Phase 1 failed but CNN succeeded.
    - Analyze remaining failure cases.

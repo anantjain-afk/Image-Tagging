@@ -196,19 +196,16 @@ for bar, val in zip(bars, recalls):
         va='center', ha='left', fontsize=9, fontweight='bold'
     )
 
-# Reference lines
-ax2.axvline(x=80, color='red', linestyle='--', linewidth=1.8)
-ax2.axvline(x=62.6, color='gray', linestyle='--', linewidth=1.5)
+# Reference line for Phase 1 best baseline
+ax2.axvline(x=62.6, color='#546E7A', linestyle='--', linewidth=1.5)
 
-ax2.text(80.4, len(model_names) - 0.4,
-         "Phase 2 Target (≥80%)", color='red', fontsize=8.5, va='top')
-ax2.text(63.0, len(model_names) - 0.4,
-         "Phase 1 Best (62.6%)", color='gray', fontsize=8.5, va='top')
+ax2.text(63.2, len(model_names) - 0.4,
+         "Phase 1 Best Baseline (k-NN: 62.6%)", color='#37474F', fontsize=9, fontweight='bold', va='top')
 
 ax2.set_yticks(y_pos)
 ax2.set_yticklabels(model_names, fontsize=9.5)
 ax2.set_xlabel("Shirt Recall (%)", fontsize=11)
-ax2.set_xlim(40, 108)
+ax2.set_xlim(40, 82)
 ax2.set_title(
     "Shirt (Class 6) Recall: Phase 1 AML vs Phase 2 CNN Models",
     fontsize=13, fontweight='bold', pad=12

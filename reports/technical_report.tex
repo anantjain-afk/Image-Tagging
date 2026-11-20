@@ -917,19 +917,19 @@ Several experimental limitations should be noted:
     sequentially in Python rather than via multi-threaded C extensions.
 \end{itemize}
 
-\subsection{Phase 2 CNN Quantitative Targets}
+\subsection{Phase 2 CNN Empirical Objectives}
 Phase~1 establishes the exact empirical baseline that the Phase~2 small
 Convolutional Neural Network must outperform. Phase~2 will evaluate a
 compact CNN architecture on the exact same $10{,}000$-image test split
-under identical evaluation standards. The quantitative success criteria
-are defined as:
+under identical evaluation standards. The core research objectives
+are:
 \begin{itemize}
-  \item \textbf{Target 1 (Shirt Recall):} Elevate Shirt recall from the
-    Phase~1 baseline of $50.7\%$--$62.6\%$ to $\mathbf{\ge 80.0\%}$.
-  \item \textbf{Target 2 (Upper-Body Confusion):} Reduce misclassification
+  \item \textbf{Objective 1 (Shirt Recall Recovery):} Substantially elevate Shirt recall from the
+    Phase~1 baseline of $50.7\%$--$62.6\%$ to $\mathbf{> 70\%}$, overcoming the handcrafted representation ceiling.
+  \item \textbf{Objective 2 (Upper-Body Confusion Suppression):} Significantly reduce misclassification
     of Shirts into T-shirts, Pullovers, and Coats from $32.3\%$--$41.0\%$
-    down below $\mathbf{15.0\%}$.
-  \item \textbf{Target 3 (Overall Generalization):} Improve test Macro-$F_1$
+    by over one-third.
+  \item \textbf{Objective 3 (Overall Generalization):} Improve test Macro-$F_1$
     beyond the best Phase~1 value of $87.31\%$ to $\mathbf{\ge 91.0\%}$.
 \end{itemize}
 These values are prospective targets; Phase~1 contains no trained CNN

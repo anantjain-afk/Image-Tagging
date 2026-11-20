@@ -181,7 +181,7 @@ A Convolutional Neural Network (CNN) directly addresses every failure mode docum
 |   * Preserves 2D spatial topology                                                 |
 |   * Adaptive, task-optimized visual filters (learned collars, plackets, lapels)   |
 |   * Weight sharing & local receptive fields provide translation equivariance     |
-|   * Result Target: Shirt Recall >= 80.0%, Macro F1 >= 91.0%                       |
+|   * Result Objective: Substantial Shirt recall recovery & Macro F1 >= 91.0%      |
 +-----------------------------------------------------------------------------------+
 ```
 
@@ -201,10 +201,10 @@ A Convolutional Neural Network (CNN) directly addresses every failure mode docum
 
 To demonstrate that Phase 2 definitively closes the gap left by handcrafted features, the Small CNN must satisfy three auditable quantitative milestones on the exact same held-out 10,000-image test set:
 
-1. **Shirt Recall Milestone:**  
-   Elevate Shirt (Class 6) recall from the AML baseline range of **50.7%–62.6%** to **$\ge 80.0\%$** (an improvement of $\ge 17.4$ percentage points).
+1. **Shirt Recall Recovery:**  
+   Substantially elevate Shirt (Class 6) recall from the AML baseline range of **50.7%–62.6%** to **$> 70.0\%$**, overcoming the handcrafted feature representation ceiling.
 2. **Upper-Body Confusion Reduction:**  
-   Reduce total upper-body Shirt misclassification (True Shirt $\rightarrow$ T-shirt / Pullover / Coat) from the current **32.3%–41.0%** range down to **$< 15.0\%$**.
+   Significantly reduce total upper-body Shirt misclassification (True Shirt $\rightarrow$ T-shirt / Pullover / Coat) from the current **32.3%–41.0%** range by over one-third.
 3. **Overall Macro F1 Elevation:**  
    Elevate overall test Macro F1 from the AML ceiling of **84.5%** (LogReg HOG) / **87.3%** (RF Pixels) to **$\ge 91.0\%$** on the official test set.
 

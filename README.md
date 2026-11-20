@@ -1,189 +1,118 @@
-# Image-Tagging: Automatic Clothing Category Recognition
+# Inventory Image Tagging via Handcrafted Features and Deep Learning
 
-**Title:** Inventory Image Tagging via Handcrafted Features and a Small CNN  
+**Project:** Inventory Image Tagging via Handcrafted Features and Deep Learning (Phase 1 + Phase 2)  
 **Course Project:** Project 11 | Team T112 | Section D (6 Members)  
-**Dataset:** [Fashion-MNIST (Official Zalando Dataset)](https://github.com/zalandoresearch/fashion-mnist)  
+**Dataset:** [Fashion-MNIST (Official Zalando Dataset)](https://github.com/zalandoresearch/fashion-mnist) — $70{,}000$ Grayscale Images ($28 \times 28$) across 10 Clothing Categories  
 **Repository:** [`anantjain-afk/Image-Tagging`](https://github.com/anantjain-afk/Image-Tagging) (Owner & Sole PR Merger: **Anant Jain**)  
-**Current Milestone:** **Phase 1 (Applied Machine Learning Baseline)**
+**Status:** **Completed (Phase 1 Applied Machine Learning + Phase 2 Deep Learning & Ablation)**  
 
 ---
 
-## 1. Project Overview & The "Hybrid" Logic
+## 1. Executive Summary & The Hybrid ML Logic
 
-Can fixed, handcrafted visual descriptors adequately classify clothing for a commercial inventory catalogue, or does fine-grained category confusion necessitate hierarchical visual representations learned by a Convolutional Neural Network (CNN)?
+E-commerce catalogue tagging requires automated, high-throughput classification of garment photographs into inventory categories. This repository documents a structured, two-phase empirical investigation addressing the central research question:
 
-To rigorously evaluate this question, our project is structured into two phases:
-1. **Phase 1 (Current): Applied Machine Learning (AML) Baseline**
-   - Normalize $28 \times 28$ grayscale apparel images into $[0.0, 1.0]$.
-   - Compare two distinct visual input representations:
-     - **Flattened Raw Pixels** ($784$ dimensions)
-     - **Histogram of Oriented Gradients (HOG)** ($324$ dimensions: $9$ orientations, $7\times 7$ cells, $2\times 2$ blocks, L2-Hys normalization)
-   - Train and benchmark four classification algorithms:
-     1. **Logistic Regression** (Linear baseline)
-     2. **$k$-Nearest Neighbors ($k$-NN)** (Instance-based baseline)
-     3. **Random Forest** (Non-linear tree ensemble)
-     4. **Support Vector Machine (SVM)** (Maximum margin baseline)
-   - Benchmark all **8 combinations** on accuracy, macro F1, per-class recall, parameter count, and inference latency.
-   - **Identify "The Gap":** Conduct a deep-dive error analysis on visually ambiguous garments (**T-shirt/top, Shirt, Pullover, Coat**), exposing why fixed descriptors struggle with fine-grained neckline/sleeve/button geometry.
-2. **Phase 2 (Future Milestone): Deep Learning (CNN) Model**
-   - Train a 2-to-3 block CNN with convolutional layers, pooling, dropout, and early stopping.
-   - Compare CNN confusion matrices directly against Phase 1 AML baselines to verify whether learned hierarchical features resolve the category confusion gap.
+> **Core Research Question:**  
+> *Can fixed, handcrafted visual descriptors (Raw Pixels and HOG) adequately classify apparel imagery, or does fine-grained upper-body category confusion necessitate hierarchical visual representations learned end-to-end by Convolutional Neural Networks?*
 
----
+To answer this, our project follows a rigorous, staged experimental roadmap:
 
-## 2. Team Workflow & Sequential Order of Execution (1 to 6)
+1. **Phase 1: Applied Machine Learning (AML) Baseline:**
+   - Evaluated 4 classical classifier families (Multinomial Logistic Regression, $k$-Nearest Neighbors, Random Forests, and Linear Support Vector Machines) across 2 feature representations ($784$-d normalized raw pixels vs.\ $324$-d multi-scale Histograms of Oriented Gradients), yielding **8 baseline configurations**.
+   - **The Discovery of "The Gap":** While overall test accuracy reached $87.43\%$ (Random Forest), class-conditional error analysis uncovered a universal bottleneck: **Shirt (Class 6) recall collapsed to $50.7\%$--$62.6\%$**, with $35.8\%$ of Shirt test samples erroneously leaking into adjacent upper-body categories (T-shirt/top, Pullover, and Coat).
 
-To guarantee **zero merge conflicts** and maintain a clean git history, the team completes the implementation in a strict sequential order.
-
-> [!IMPORTANT]
-> **Repository Ownership & Merge Policy:**  
-> **Anant Jain ([`anantjain-afk`](https://github.com/anantjain-afk)) is the repository owner and the ONLY member authorized to merge Pull Requests into `main`.**  
-> Each member creates a feature branch, completes their assigned task, tests it, opens a Pull Request to `main`, and notifies Anant to review and merge.
-
-```mermaid
-flowchart TD
-    S1["1. Anant Jain (Repo Owner)"] -->|Merges data.py, evaluation.py & 01_eda.ipynb| S2["2. Kartik Mehra"]
-    S2 -->|Merges features.py & 02_features.ipynb to main| S3["3. Krishna Gehlot"]
-    S3 -->|Merges logreg.py & 03_logreg.ipynb to main| S4["4. Vipul Sharma"]
-    S4 -->|Merges knn.py & 04_knn.ipynb to main| S5["5. Aditya"]
-    S5 -->|Merges random_forest.py & 05_rf.ipynb to main| S6["6. Utkarsh Jain"]
-    S6 -->|Merges svm.py, 06_svm.ipynb & report to main| S7["Final: Anant runs 00_master_aml_comparison.ipynb"]
-```
-
-### Execution Steps:
-1. **Step 1: Anant Jain (1)** — Establishes repo structure, `requirements.txt`, `src/aml/data.py` (Fashion-MNIST loader & 48k/12k train/val split), `src/aml/evaluation.py`, and completes full Exploratory Data Analysis in `notebooks/01_exploratory_data_analysis.ipynb`. Merges to `main`.
-2. **Step 2: Kartik Mehra (2)** — Pulls `main`, implements `src/aml/features.py` (Pixels + HOG), creates precomputed feature cache in `data/cache/`, and completes `notebooks/02_feature_exploration.ipynb`. Anant merges Kartik's PR.
-3. **Step 3: Krishna Gehlot (3)** — Pulls `main`, implements Model 1: Logistic Regression in `src/aml/models/logreg.py`, generates weight coefficient heatmaps in `notebooks/03_logistic_regression.ipynb`, and exports JSON metrics. Anant merges Krishna's PR.
-4. **Step 4: Vipul Sharma (4)** — Pulls `main`, implements Model 2: $k$-NN in `src/aml/models/knn.py`, conducts an in-depth latency and memory scaling analysis in `notebooks/04_knn_experiments.ipynb`, and exports JSON metrics. Anant merges Vipul's PR.
-5. **Step 5: Aditya (5)** — Pulls `main`, implements Model 3: Random Forest in `src/aml/models/random_forest.py`, analyzes overfitting and Gini feature importances in `notebooks/05_random_forest.ipynb`, and exports JSON metrics. Anant merges Aditya's PR.
-6. **Step 6: Utkarsh Jain (6)** — Pulls `main`, implements Model 4: Linear SVM in `src/aml/models/svm.py` and `src/aml/error_analysis.py`. Performs cross-model garment confusion analysis across all 4 models, generates misclassification galleries in `notebooks/06_svm_and_error_analysis.ipynb`, and writes `reports/error_analysis.md` outlining "The Gap". Anant merges Utkarsh's PR.
-7. **Final Wrap-Up: Anant Jain** — Pulls `main` (now containing all 8 JSON results) and runs `notebooks/00_master_aml_comparison.ipynb` to render the final benchmark comparison table and charts.
+2. **Phase 2: Deep Learning Architectures & Transfer Learning:**
+   - Addressed the representation deficit by engineering and evaluating 3 deep convolutional models:
+     - **SimpleCNN:** 2-block convolutional baseline ($421{,}738$ parameters).
+     - **DeepCNN:** 3-block resolution-tailored convolutional architecture ($390{,}634$ parameters).
+     - **RegNet-Y-400MF:** Adapted ImageNet transfer learning backbone ($3{,}906{,}978$ parameters).
+   - **The Resolution of The Gap:** DeepCNN achieved **$92.21\%$ test accuracy and $92.16\%$ Macro $F_1$**, elevating Shirt recall to **$73.2\%$** ($+13.9$ percentage points over Random Forest, $+10.6$~pp over the highest classical model) and reducing upper-body confusion from $35.8\%$ down to $23.6\%$.
+   - **Controlled Ablation Study:** A 5-variable controlled ablation study isolated **Batch Normalization** ($-6.0$~pp recall when removed) and **Data Augmentation** ($-4.7$~pp recall when removed) as the vital regularizers enabling recovery of fine-grained collar and placket features.
 
 ---
 
-## 3. Team Member Work Breakdown & Detailed Contributions
+## 2. Master Cross-Phase Benchmark (All 11 Configurations)
 
-To ensure academic accountability and technical clarity, every component of this project was individually owned, implemented, and documented by a dedicated team member. Below is the comprehensive breakdown of who did what work:
+All models are evaluated on the exact same held-out $10{,}000$-image test set using a strictly reproducible stratified split ($48{,}000$ train, $12{,}000$ validation, $10{,}000$ test, `seed=42`).
 
-| Order | Member | GitHub Handle | Phase 1 Role & Ownership | Key Owned Files | Individual Guide |
+| # | Model Architecture | Feature Representation | Trainable Parameters | Inference Latency | Test Accuracy | Test Macro $F_1$ | Shirt (Class 6) Recall | Phase / Status |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **Linear SVM** | Raw Pixels ($784$-d) | 7,850 | 0.001 ms | 83.80% | 83.57% | 50.7% | Phase 1 (AML) |
+| 2 | **Linear SVM** | HOG ($324$-d) | 3,250 | 0.001 ms | 84.23% | 84.06% | 54.6% | Phase 1 (AML) |
+| 3 | **Multinomial LogReg** | Raw Pixels ($784$-d) | 7,850 | 0.001 ms | 84.32% | 84.24% | 57.1% | Phase 1 (AML) |
+| 4 | **Multinomial LogReg** | HOG ($324$-d) | 3,250 | <0.001 ms | 84.55% | 84.49% | 57.8% | Phase 1 (AML) |
+| 5 | **Random Forest** | Raw Pixels ($784$-d) | 1,720,000 | 0.026 ms | **87.43%** | **87.31%** | 59.3% | Phase 1 (AML Best) |
+| 6 | **Random Forest** | HOG ($324$-d) | 850,000 | 0.018 ms | 84.35% | 84.30% | 59.4% | Phase 1 (AML) |
+| 7 | **$k$-NN ($k=5$)** | Raw Pixels ($784$-d) | Non-parametric (179 MB) | 1.840 ms | 85.41% | 85.40% | 60.2% | Phase 1 (AML) |
+| 8 | **$k$-NN ($k=5$)** | HOG ($324$-d) | Non-parametric (74 MB) | 0.920 ms | 83.84% | 83.85% | **62.6%** | Phase 1 (AML) |
+| 9 | **SimpleCNN (2-Block)** | Learned 2D Tensors | 421,738 | 0.024 ms | 91.14% | 91.08% | 70.9% | Phase 2 (DL) |
+| 10 | **DeepCNN (3-Block)** | **Learned 2D Tensors** | **390,634** | **0.029 ms** | **92.21%** | **92.16%** | **73.2%** | **Phase 2 (Pareto-Optimal)** |
+| 11 | **RegNet-Y-400MF** | ImageNet Transfer + Fine | 3,906,978 | 0.121 ms | 91.46% | 91.42% | **73.4%** | Phase 2 (Transfer) |
+
+---
+
+## 3. Key Findings & Scientific Insights
+
+### 3.1. Phase 1 AML Findings: The Universal Shirt Deficit
+- **The Classical Ceiling:** Depth-regularized Random Forest (200 trees, $\text{max\_depth}=20$) achieved the highest classical performance ($87.43\%$ accuracy, $87.31\%$ Macro $F_1$).
+- **The Representation Deficit:** Across all 8 classical models, Shirt recall was constrained between $50.7\%$ (SVM Pixels) and $62.6\%$ ($k$-NN HOG), while Trouser ($96.7\%$) and Bag ($97.3\%$) achieved near-perfect accuracy.
+- **Physical Causes of Failure:**
+  1. *Destruction of Spatial Topology:* Flattening 2D images to 1D vectors destroys local adjacency; button plackets and collar edges become isolated scalar features.
+  2. *HOG Spatial Averaging:* At $28 \times 28$ resolution, a shirt collar spans roughly $3 \times 3$ pixels. HOG's $7 \times 7$ cell integration averages these localized gradient spikes, smoothing away discriminative cues.
+  3. *Silhouette Equivalence:* T-shirts, Pullovers, Coats, and Shirts share identical torso bounding boxes; classical linear boundaries and axis-aligned tree splits cannot separate them without fine interior features.
+
+### 3.2. Phase 2 Deep Learning Recovery: Closing the Representation Gap
+- **Superiority of Learned Representations:** Convolutions preserve 2D topology and extract hierarchical features (edges $\to$ contours $\to$ garment structure), boosting catalogue Macro $F_1$ from $87.31\%$ to **$92.16\%$**.
+- **Quantified Shirt Recovery:**
+  - Random Forest misclassifies **$407 / 1{,}000$** Shirts ($40.7\%$ error rate).
+  - DeepCNN misclassifies only **$268 / 1{,}000$** Shirts ($26.8\%$ error rate).
+  - **Over 130 previously lost garment images recovered per 1,000 items.**
+- **Upper-Body Misclassification Collapse:**
+  - Shirt $\to$ Pullover leakage drops from $12.0\%$ to **$6.1\%$** (halved).
+  - Shirt $\to$ Coat leakage drops from $9.0\%$ to **$7.0\%$**.
+  - Shirt $\to$ T-shirt leakage drops from $14.8\%$ to **$10.5\%$**.
+  - Total upper-body confusion contracts from **$35.8\%$ down to $23.6\%$**.
+
+### 3.3. The Architectural Parameter Paradox
+Despite having an additional convolutional block and doubling channel capacity ($128$ filters vs.\ $64$), **DeepCNN contains $31{,}104$ fewer parameters than SimpleCNN ($391\text{K}$ vs.\ $422\text{K}$)**.  
+*Why?* The third max-pooling stage reduces the feature map from $7 \times 7$ to $3 \times 3$, shrinking the flattened dense projection input from $3{,}136$ to $1{,}152$. This shrinks the dense linear projection matrix by $26.3\%$ ($294{,}912$ vs.\ $401{,}408$ weights), delivering higher accuracy with smaller model weight footprint.
+
+### 3.4. Controlled 5-Variable Ablation Study
+
+| Ablation Condition | Key Modification | Test Accuracy | Macro $F_1$ | Shirt Recall | Key Takeaway |
 |---|---|---|---|---|---|
-| **1st** | **Anant Jain** | [`anantjain-afk`](https://github.com/anantjain-afk) | **Repository Scaffolding, Data Pipeline, EDA & Master Benchmark Integration** | `src/aml/data.py`<br>`src/aml/evaluation.py`<br>`notebooks/01_exploratory_data_analysis.ipynb`<br>`notebooks/00_master_aml_comparison.ipynb`<br>`reports/figures/eda/` | [01_Anant_Setup_Data_MasterNotebook.md](docs/team/01_Anant_Setup_Data_MasterNotebook.md) |
-| **2nd** | **Kartik Mehra** | [`KartikMehra22`](https://github.com/KartikMehra22) | **Feature Engineering (Pixels & HOG), Caching Utility & Exploration** | `src/aml/features.py`<br>`notebooks/02_feature_exploration.ipynb`<br>`data/cache/` utility<br>`reports/figures/features/` | [02_Kartik_Feature_Extraction_HOG.md](docs/team/02_Kartik_Feature_Extraction_HOG.md) |
-| **3rd** | **Krishna Gehlot** | [`NSTKrishna`](https://github.com/NSTKrishna) | **Model 1: Logistic Regression Pipeline & Weight Coefficient Heatmaps** | `src/aml/models/logreg.py`<br>`notebooks/03_logistic_regression.ipynb`<br>`reports/results/logreg_*.json`<br>`reports/figures/logreg/` | [03_Krishna_Logistic_Regression.md](docs/team/03_Krishna_Logistic_Regression.md) |
-| **4th** | **Vipul Sharma** | [`vs-code06`](https://github.com/vs-code06) | **Model 2: $k$-Nearest Neighbors ($k$-NN) & Latency/Memory Scaling Analysis** | `src/aml/models/knn.py`<br>`notebooks/04_knn_experiments.ipynb`<br>`reports/results/knn_*.json`<br>`reports/figures/knn/` | [04_Vipul_KNN_Classifier.md](docs/team/04_Vipul_KNN_Classifier.md) |
-| **5th** | **Aditya** | [`AdityaInnovates`](https://github.com/AdityaInnovates) | **Model 3: Random Forest Ensemble, Overfitting & Feature Importance** | `src/aml/models/random_forest.py`<br>`notebooks/05_random_forest.ipynb`<br>`reports/results/rf_*.json`<br>`reports/figures/rf/` | [05_Aditya_Random_Forest.md](docs/team/05_Aditya_Random_Forest.md) |
-| **6th** | **Utkarsh Jain** | [`UJ474`](https://github.com/UJ474) | **Model 4: Support Vector Machine (Linear SVM) & Garment Error Analysis** | `src/aml/models/svm.py`<br>`src/aml/error_analysis.py`<br>`notebooks/06_svm_and_error_analysis.ipynb`<br>`reports/error_analysis.md`<br>`reports/figures/errors/` | [06_Utkarsh_SVM_Error_Analysis.md](docs/team/06_Utkarsh_SVM_Error_Analysis.md) |
+| **Full DeepCNN (Base)** | 3 Blocks + BN + Drop + Aug | 90.26% | 90.27% | **72.8%** | Controlled baseline checkpoint |
+| **No Dropout** | Conv & Dense Dropout removed | **91.93%** | **91.88%** | 72.0% | Macro F1 rises on easy classes, but Shirt recall drops ($-0.8$ pp) |
+| **No BatchNorm** | All BatchNorm2d layers removed | 89.90% | 89.83% | **66.8%** | **Severe collapse ($-6.0$ pp):** BN is vital for placket gradient flow |
+| **No Augmentation** | Flips and rotations removed | 91.69% | 91.60% | **68.1%** | **Severe drop ($-4.7$ pp):** Memorizes rigid training orientations |
+| **2-Block (SimpleCNN)** | 3rd block removed ($7\times7$ pool) | 89.44% | 89.45% | 70.5% | Receptive field insufficient for global silhouette |
+
+### 3.5. The $28 \times 28$ Empirical Resolution Frontier
+Even with deep convolutional networks and transfer learning, Shirt recall stabilizes at ${\approx}73.2\%$--$73.4\%$. Three fundamental factors govern this ceiling:
+1. **Nyquist-Shannon Sampling Limits:** At $28 \times 28$, a button placket is $1$--$2$ pixels wide. When downsampled, subtle collar tips blend into adjacent pixels, setting an information-theoretic limit.
+2. **Annotation Noise Floor:** Garments with hybrid morphology (collarless buttoned henleys, fine-knit crewnecks) exhibit inherent inter-annotator ambiguity in Fashion-MNIST.
+3. **Why ImageNet RegNet Did Not Beat DeepCNN:** Pretrained on $224 \times 224$ RGB photographs, RegNet's aggressive initial stride-2 stem downsizes $28 \times 28$ inputs to $14 \times 14$ immediately, causing early spatial information loss.
+
+### 3.6. Production Recommendation: DeepCNN is Pareto-Optimal
+For commercial e-commerce inventory tagging, **DeepCNN (3-block)** is the unequivocal deployment choice:
+- **Highest Macro $F_1$:** $92.16\%$ (beats all classical and transfer models).
+- **High Throughput:** $0.029$ ms per image ($>34{,}000$ images/second per CPU core).
+- **Compact Memory Footprint:** $390{,}634$ parameters (${\approx}1.5$ MB storage, $4.4\times$ smaller than Random Forest).
 
 ---
 
-### Detailed Member Contributions & Deliverables
+## 4. Team Work Breakdown & Individual Contributions
 
-#### 1. Anant Jain ([`anantjain-afk`](https://github.com/anantjain-afk)) — Repository Setup, Data Pipeline, EDA & Master Synthesis
-- **Role:** Project Lead, Repository Owner, Milestone 1 & Milestone 4 Lead.
-- **Merge Authority:** Sole authorized member responsible for reviewing and merging all teammate Pull Requests into `main`.
-- **Core Engineering & Deliverables:**
-  - **Repository Architecture:** Established project structure, `.gitignore`, dependency specifications in `requirements.txt`, and package configuration in `pyproject.toml`.
-  - **Shared Data Pipeline ([`src/aml/data.py`](src/aml/data.py)):** Built checksum-verified automated downloader for official Fashion-MNIST IDX binaries; implemented `float32` normalization into $[0.0, 1.0]$; constructed stratified 48,000 / 12,000 train/validation splits (`random_state=42`) and held out the official 10,000-image test set; added atomic compressed `.npz` caching.
-  - **Evaluation Standards ([`src/aml/evaluation.py`](src/aml/evaluation.py)):** Implemented team-wide `compute_metrics()` (accuracy, macro F1, 10 per-class recalls, and $10 \times 10$ confusion matrix), `count_parameters()` for linear models and tree ensembles, and `measure_inference_latency()` with warmed-up median batch timing.
-  - **Exploratory Data Analysis ([`notebooks/01_exploratory_data_analysis.ipynb`](notebooks/01_exploratory_data_analysis.ipynb)):** Conducted rigorous dataset audit verifying exact 6,000/1,000 image class balance; analyzed pixel intensity distributions; generated mean archetype and pixel-wise variance heatmaps; built a 25-image variety grid; executed unsupervised 2D PCA projection demonstrating the topological entanglement of upper-body tops in pixel space.
-  - **Master Comparison Notebook ([`notebooks/00_master_aml_comparison.ipynb`](notebooks/00_master_aml_comparison.ipynb)):** Final integration deliverable that validates all 8 JSON records in `reports/results/`, compiles the comprehensive cross-model benchmark table, renders accuracy/F1 bar charts, and synthesizes overall Phase 1 conclusions.
-  - **Unit Test Suite ([`tests/`](tests/)):** Wrote 35 unit tests validating data loading, feature shapes, metric invariants, and model export schemas.
-  - **Exported Figures:** [`reports/figures/eda/`](reports/figures/eda/) (`class_balance.png`, `pixel_intensity_distribution.png`, `class_mean_and_variance.png`, `variety_grid.png`, `pca_2d_projection.png`).
+Every component of this project was individually owned, implemented, and verified by a dedicated team member across both Phase 1 and Phase 2:
 
-#### 2. Kartik Mehra ([`KartikMehra22`](https://github.com/KartikMehra22)) — Feature Extraction, HOG Engine & Feature Exploration
-- **Role:** Feature Pipeline Engineer, Milestone 2 Lead.
-- **Core Engineering & Deliverables:**
-  - **Feature Extraction Engine ([`src/aml/features.py`](src/aml/features.py)):**
-    - Raw Pixels: Flattened $(N, 28, 28)$ images into $(N, 784)$ float32 vectors.
-    - Histogram of Oriented Gradients (HOG): Implemented scikit-image HOG extraction with 9 orientation bins, $7 \times 7$ pixels per cell, and $2 \times 2$ cells per block (L2-Hys block normalization), yielding compact 324-dimensional feature vectors.
-    - Caching Utility: Built `get_features()` with offline `.npz` storage and the `precompute_and_cache_all()` CLI script to eliminate redundant feature extraction across teammates.
-  - **Feature Exploration ([`notebooks/02_feature_exploration.ipynb`](notebooks/02_feature_exploration.ipynb)):**
-    - Visualized HOG gradient arrow overlays across all 10 garment categories.
-    - Investigated upper-body silhouette ambiguity, illustrating why $7 \times 7$ cell pooling smooths away fine spatial cues (collar tips, buttons, seams).
-    - Produced polar orientation profiles demonstrating sharp directional peaks for structured items (trousers at 90°, shoes at 0°/180°) vs. isotropic diffuse energy for shirts and tops.
-    - Added automated assertions validating feature shapes and non-negativity.
-  - **Exported Figures:** [`reports/figures/features/`](reports/figures/features/) (`hog_class_examples.png`, `upper_body_hog_comparison.png`, `hog_orientation_profiles.png`).
-
-#### 3. Krishna Gehlot ([`NSTKrishna`](https://github.com/NSTKrishna)) — Model 1: Logistic Regression & Weight Heatmaps
-- **Role:** Linear Baseline Modeling Engineer, Milestone 3.
-- **Core Engineering & Deliverables:**
-  - **Model Architecture & Tuning ([`src/aml/models/logreg.py`](src/aml/models/logreg.py)):**
-    - Constructed `StandardScaler` + multinomial `LogisticRegression` pipeline using L-BFGS solver with `max_iter=2000` to guarantee complete convergence.
-    - Built hyperparameter tuning grid across inverse regularization strength $C \in \{0.1, 1.0, 10.0\}$ selecting best model by validation Macro F1.
-    - Standardized evaluation functions for refitting on all 60,000 training images and testing on the held-out test set.
-  - **Experimentation & Interpretability ([`notebooks/03_logistic_regression.ipynb`](notebooks/03_logistic_regression.ipynb)):**
-    - Evaluated Raw Pixels ($C=1.0$: Val F1 85.34%, Test Accuracy 84.32%, Macro F1 84.24%) and HOG ($C=1.0$: Val F1 85.16%, Test Accuracy 84.55%, Macro F1 84.49%).
-    - Unpacked linear decision boundaries by reshaping learned multiclass weight coefficients back into $28 \times 28$ spatial heatmaps for all 10 classes, revealing positive weights on silhouettes and negative weights on conflicting boundaries (e.g., negative collar zone for crewneck T-shirts).
-  - **Exported Deliverables:** [`reports/results/logreg_pixels.json`](reports/results/logreg_pixels.json), [`reports/results/logreg_hog.json`](reports/results/logreg_hog.json), and [`reports/figures/logreg/`](reports/figures/logreg/) (`pixel_weight_heatmaps.png`, `per_class_recall.png`).
-
-#### 4. Vipul Sharma ([`vs-code06`](https://github.com/vs-code06)) — Model 2: $k$-Nearest Neighbors & Latency/Memory Scaling Analysis
-- **Role:** Non-Parametric Modeling Engineer, Milestone 3.
-- **Core Engineering & Deliverables:**
-  - **Model Architecture & Batching ([`src/aml/models/knn.py`](src/aml/models/knn.py)):**
-    - Built `KNeighborsClassifier` pipeline with Euclidean distance and brute-force search.
-    - Implemented chunked matrix inference (`predict_in_batches`, batch size 500) preventing RAM exhaustion during distance calculation across 48k/60k images.
-    - Grid-searched neighborhood size $k \in \{3, 5, 7, 9\}$ and distance-inverse weighting (`uniform` vs. `distance`).
-  - **Computational Scaling & Latency Study ([`notebooks/04_knn_experiments.ipynb`](notebooks/04_knn_experiments.ipynb)):**
-    - Evaluated Raw Pixels ($k=5$, distance: Val F1 85.67%, Test Accuracy 85.41%, Macro F1 85.40%) and HOG ($k=9$, distance: Val F1 84.75%, Test Accuracy 83.84%, Macro F1 83.85%).
-    - Conducted comprehensive latency and throughput profiling, demonstrating that dimensionality reduction via HOG yields a **64.2% reduction in prediction latency** (0.098 ms vs. 0.274 ms/image).
-    - Quantified non-parametric memory footprint: Storing 60,000 raw training vectors requires **179.44 MiB** vs. **74.16 MiB** for HOG (58.7% memory savings).
-    - Analyzed production trade-offs and viability for real-time inventory catalog tagging.
-  - **Exported Deliverables:** [`reports/results/knn_pixels.json`](reports/results/knn_pixels.json), [`reports/results/knn_hog.json`](reports/results/knn_hog.json), and [`reports/figures/knn/`](reports/figures/knn/) (`knn_tuning_comparison.png`, `latency_comparison.png`, `per_class_recall.png`, `confusion_matrix.png`).
-
-#### 5. Aditya ([`AdityaInnovates`](https://github.com/AdityaInnovates)) — Model 3: Random Forest Classifier, Overfitting & Feature Importance
-- **Role:** Tree Ensemble Modeling Engineer, Milestone 3.
-- **Core Engineering & Deliverables:**
-  - **Model Architecture ([`src/aml/models/random_forest.py`](src/aml/models/random_forest.py)):**
-    - Implemented multi-threaded `RandomForestClassifier` with `n_jobs=-1` and reproducible seed control.
-    - Implemented 2D grid search across `n_estimators` $\in \{50, 100, 200\}$ and `max_depth` $\in \{10, 20, \text{None}\}$.
-    - Formulated dual-split scoring (training and validation) to explicitly track generalization error and tree growth dynamics.
-  - **Overfitting & Feature Importance Analysis ([`notebooks/05_random_forest.ipynb`](notebooks/05_random_forest.ipynb)):**
-    - Achieved Phase 1's highest overall test accuracy: Raw Pixels (200 trees, depth 20: Val F1 88.45%, **Test Accuracy 87.43%**, **Test Macro F1 87.31%**) and HOG (200 trees, unconstrained depth: Val F1 84.91%, Test Accuracy 84.35%, Test Macro F1 84.30%).
-    - Proved that unconstrained depth (`max_depth=None`) causes complete training split memorization (100% training accuracy with 1.7M–2.5M nodes) while validation F1 plateaus, proving `max_depth=20` as an optimal regularizer.
-    - Analyzed Gini feature importance: mapped pixel importances back to $28 \times 28$ image space to reveal decision boundaries focused on silhouette borders, shoulder slopes, and hems.
-  - **Exported Deliverables:** [`reports/results/rf_pixels.json`](reports/results/rf_pixels.json), [`reports/results/rf_hog.json`](reports/results/rf_hog.json), and [`reports/figures/rf/`](reports/figures/rf/) (`overfitting_curves.png`, `pixel_importance_heatmap.png`, `hog_importance.png`).
-
-#### 6. Utkarsh Jain ([`UJ474`](https://github.com/UJ474)) — Model 4: Support Vector Machine (Linear SVM) & Garment Error Analysis
-- **Role:** Maximum Margin Modeling Engineer, Lead Error Analyst, Milestone 3 & Milestone 4.
-- **Core Engineering & Deliverables:**
-  - **Linear SVM Pipeline ([`src/aml/models/svm.py`](src/aml/models/svm.py)):**
-    - Implemented `StandardScaler(with_mean=False)` + `LinearSVC` with automatic dual solver selection (`dual='auto'`).
-    - Grid-searched penalty parameter $C \in \{0.1, 1.0, 10.0\}$ selecting best candidate by validation Macro F1.
-    - Validated fastest inference across all models: **0.0006–0.0013 ms/image** (over 200x faster than $k$-NN).
-  - **Error Analysis Toolkit ([`src/aml/error_analysis.py`](src/aml/error_analysis.py)):**
-    - Implemented full-row normalized confusion matrix visualization.
-    - Implemented focused upper-body submatrices (classes 0, 2, 4, 6) preserving overall prediction distribution.
-    - Built misclassification gallery extractors for paired error analysis.
-  - **Experimentation ([`notebooks/06_svm_and_error_analysis.ipynb`](notebooks/06_svm_and_error_analysis.ipynb)):**
-    - Evaluated Raw Pixels ($C=0.1$: Val F1 85.57%, Test Accuracy 83.80%, Macro F1 83.57%) and HOG ($C=0.1$: Val F1 85.06%, Test Accuracy 84.23%, Macro F1 84.06%).
-    - Generated visual misclassification galleries identifying where collars and textures are lost at $28 \times 28$ resolution.
-  - **Academic Synthesis Report ([`reports/error_analysis.md`](reports/error_analysis.md)):**
-    - Authored the core Phase 1 synthesis report documenting "The Gap": the ~35% recall deficit for Shirt and 32%–41% upper-body directional confusion across all 4 model families.
-    - Articulated the mathematical limits of linear hyperplanes, axis-aligned splits, and Euclidean distance on flattened pixels and fixed HOG bins.
-    - Formulated the inductive biases and auditable success criteria for the Phase 2 Small CNN.
-  - **Exported Deliverables:** [`reports/results/svm_pixels.json`](reports/results/svm_pixels.json), [`reports/results/svm_hog.json`](reports/results/svm_hog.json), and [`reports/figures/errors/`](reports/figures/errors/) (`svm_pixels_confusion_matrix.png`, `svm_pixels_upper_body_confusion.png`, `svm_pixels_6_as_0_gallery.png`, `svm_pixels_2_as_4_gallery.png`).
-
----
-
-For comprehensive technical rules, team coordination protocols, and branch policies, see [**`docs/team/README.md`**](docs/team/README.md).
-
----
-
-## 4. Shared Technical Standards
-
-- **Dataset:** Official Fashion-MNIST (Zalando Research). Grayscale images of size $28 \times 28$.
-- **Class Labels (10):**
-  - `0`: T-shirt/top | `1`: Trouser | `2`: Pullover | `3`: Dress | `4`: Coat
-  - `5`: Sandal | `6`: Shirt | `7`: Sneaker | `8`: Bag | `9`: Ankle boot
-- **Split Scheme:**
-  - Official Train Set: 60,000 images.
-  - Development Split: **48,000 Training** and **12,000 Validation** (Stratified, `random_state=42`).
-  - Official Test Set: **10,000 images** (Held-out; only evaluated once for final reporting).
-- **Pixel Normalization:** Divide raw $[0, 255]$ uint8 values by $255.0$ to obtain `float32` in $[0.0, 1.0]$.
-- **Features:**
-  - `pixels`: Flattened 1D vector of shape `(N, 784)`.
-  - `hog`: 9 orientations, $7\times 7$ pixels per cell, $2\times 2$ cells per block, L2-Hys normalization. Output shape: `(N, 324)`.
-- **Metrics Evaluated:** Accuracy, Macro F1, Per-class Recall, Parameter Count / Complexity, Inference Latency (ms/image).
+| Member | GitHub Handle | Phase 1 (AML) Ownership | Phase 2 (DL) Ownership | Key Owned Files |
+|---|---|---|---|---|
+| **Anant Jain** | [`@anantjain-afk`](https://github.com/anantjain-afk) | **Repository Scaffolding, Data Pipeline, EDA & Master Synthesis** | **PyTorch Dataset Pipeline & Data Augmentation** | `src/aml/data.py`<br>`src/aml/evaluation.py`<br>`src/dl/data.py`<br>`notebooks/01_exploratory_data_analysis.ipynb`<br>`notebooks/00_master_aml_comparison.ipynb` |
+| **Kartik Mehra** | [`@KartikMehra22`](https://github.com/KartikMehra22) | **Feature Extraction Engine (Pixels + HOG), Caching Utility & Exploration** | **Deep Learning Training Engine, Optimization & Early Stopping** | `src/aml/features.py`<br>`src/dl/training.py`<br>`notebooks/02_feature_exploration.ipynb`<br>`data/cache/` utility |
+| **Krishna Gehlot** | [`@NSTKrishna`](https://github.com/NSTKrishna) | **Model 1: Multinomial Logistic Regression & Weight Spatial Heatmaps** | **Main CNN Training, Benchmarking & Confusion Matrices** | `src/aml/models/logreg.py`<br>`notebooks/03_logistic_regression.ipynb`<br>`notebooks/07_cnn_experiments.ipynb`<br>`phase2_reports/results/cnn_*.json` |
+| **Vipul Sharma** | [`@vs-code06`](https://github.com/vs-code06) | **Model 2: $k$-Nearest Neighbors ($k$-NN) & Latency/Scaling Analysis** | **CNN Model Architectures, Unit Testing & 5-Variable Ablation Study** | `src/aml/models/knn.py`<br>`src/dl/models/cnn.py`<br>`tests/test_cnn.py`<br>`notebooks/04_knn_experiments.ipynb`<br>`notebooks/08_ablation_study.ipynb`<br>`phase2_reports/results/ablation_study.json` |
+| **Aditya** | [`@AdityaInnovates`](https://github.com/AdityaInnovates) | **Model 3: Random Forest Ensemble, Overfitting & Feature Importance** | **Pretrained RegNet-Y-400MF Transfer Learning & Adaptation** | `src/aml/models/random_forest.py`<br>`src/dl/models/regnet.py`<br>`notebooks/05_random_forest.ipynb`<br>`notebooks/09_regnet_transfer_learning.ipynb`<br>`phase2_reports/results/regnet_finetuned.json` |
+| **Utkarsh Jain** | [`@UJ474`](https://github.com/UJ474) | **Model 4: Linear SVM, Error Analysis Toolkit & Gap Documentation** | **Cross-Phase Error Analysis & IEEE LaTeX Technical Report** | `src/aml/models/svm.py`<br>`src/aml/error_analysis.py`<br>`reports/error_analysis.md`<br>`phase2_reports/phase2_error_analysis.md`<br>`phase2_reports/latex_report/main.tex` |
 
 ---
 
@@ -191,120 +120,177 @@ For comprehensive technical rules, team coordination protocols, and branch polic
 
 ```
 Image-Tagging/
-├── README.md                                  # Repository landing page
-├── prompt.md                                  # Prompt template for AI-assisted dev
-├── requirements.txt                           # Core dependencies
+├── README.md                                  # Comprehensive project landing page (Phase 1 + 2)
+├── requirements.txt                           # Complete project dependencies (PyTorch + scikit-learn)
 ├── pyproject.toml                             # Package configuration
-├── docs/team/                                 # Individual teammate guides (Markdown)
-│   ├── README.md                              # Master team guide & technical agreement
+├── phase2_plan.md                             # Phase 2 strategic roadmap & milestones
+├── phase2_team_guide.md                       # Phase 2 execution guide & team contract
+├── docs/team/                                 # Phase 1 team documentation & technical guides
+│   ├── README.md                              # Master team coordination protocol
 │   ├── 01_Anant_Setup_Data_MasterNotebook.md
 │   ├── 02_Kartik_Feature_Extraction_HOG.md
 │   ├── 03_Krishna_Logistic_Regression.md
 │   ├── 04_Vipul_KNN_Classifier.md
 │   ├── 05_Aditya_Random_Forest.md
 │   └── 06_Utkarsh_SVM_Error_Analysis.md
-├── src/aml/                                   # Source package
-│   ├── __init__.py
-│   ├── data.py                                # Fashion-MNIST loader & 48k/12k split
-│   ├── features.py                            # Pixels (784) & HOG (324) extraction
-│   ├── evaluation.py                          # Metric calculation & latency timer
-│   ├── error_analysis.py                      # Confusion matrices & error galleries
-│   └── models/
-│       ├── __init__.py
-│       ├── logreg.py                          # Logistic Regression
-│       ├── knn.py                             # k-Nearest Neighbors
-│       ├── random_forest.py                   # Random Forest
-│       └── svm.py                             # Support Vector Machine
-├── notebooks/                                 # Individual & Master Jupyter Notebooks
-│   ├── 00_master_aml_comparison.ipynb        # Master benchmark comparison & synthesis
-│   ├── 01_exploratory_data_analysis.ipynb     # Exploratory Data Analysis (EDA)
-│   ├── 02_feature_exploration.ipynb           # Pixels vs. HOG feature visual analysis
-│   ├── 03_logistic_regression.ipynb           # Model 1: Logistic Regression experiments
-│   ├── 04_knn_experiments.ipynb               # Model 2: k-NN & latency scaling
-│   ├── 05_random_forest.ipynb                 # Model 3: Random Forest & feature importance
-│   └── 06_svm_and_error_analysis.ipynb        # Model 4: Linear SVM & error galleries
-└── reports/
-    ├── error_analysis.md                      # The Gap: Detailed error analysis
-    ├── figures/                               # Exported charts & visualizations
-    │   ├── eda/                               # Class balance, intensity, archetypes, PCA
-    │   ├── features/                          # HOG vs. pixels, upper-body comparisons
-    │   ├── logreg/                            # Weight heatmaps, recall charts
-    │   ├── knn/                               # Latency scaling, tuning curves
-    │   ├── rf/                                # Overfitting curves, feature importances
-    │   └── errors/                            # Confusion matrices & misclassifications
-    └── results/                               # 8 standardized JSON result files
+├── src/                                       # Core modular source code
+│   ├── aml/                                   # Phase 1 Applied Machine Learning package
+│   │   ├── data.py                            # Fashion-MNIST loader & stratified 48k/12k split
+│   │   ├── features.py                        # Raw Pixels (784) & HOG (324) feature extractors
+│   │   ├── evaluation.py                      # Team metric calculation & batch latency timer
+│   │   ├── error_analysis.py                  # Confusion matrices & error gallery extractors
+│   │   └── models/                            # Classical ML models
+│   │       ├── logreg.py                      # Multinomial Logistic Regression pipeline
+│   │       ├── knn.py                         # k-NN pipeline with batched matrix inference
+│   │       ├── random_forest.py               # Depth-regularized Random Forest ensemble
+│   │       └── svm.py                         # Linear Support Vector Machine pipeline
+│   └── dl/                                    # Phase 2 Deep Learning package
+│       ├── data.py                            # PyTorch Dataset, DataLoaders & Augmentations
+│       ├── training.py                        # PyTorch training loop, EarlyStopping & Scheduler
+│       └── models/                            # Neural network architectures
+│           ├── cnn.py                         # SimpleCNN (2-block) & DeepCNN (3-block)
+│           └── regnet.py                      # RegNet-Y-400MF stem adaptation for grayscale
+├── notebooks/                                 # Complete end-to-end Jupyter Notebooks
+│   ├── 00_master_aml_comparison.ipynb        # Phase 1 Master benchmark table & synthesis
+│   ├── 01_exploratory_data_analysis.ipynb     # Phase 1 EDA & class distribution auditing
+│   ├── 02_feature_exploration.ipynb           # Phase 1 Pixels vs. HOG visual exploration
+│   ├── 03_logistic_regression.ipynb           # Phase 1 LogReg tuning & weight heatmaps
+│   ├── 04_knn_experiments.ipynb               # Phase 1 k-NN tuning & latency scaling
+│   ├── 05_random_forest.ipynb                 # Phase 1 Random Forest & feature importances
+│   ├── 06_svm_and_error_analysis.ipynb        # Phase 1 SVM tuning & initial error analysis
+│   ├── 07_cnn_experiments.ipynb               # Phase 2 SimpleCNN & DeepCNN training & evaluation
+│   ├── 08_ablation_study.ipynb                # Phase 2 5-Variable controlled ablation study
+│   └── 09_regnet_transfer_learning.ipynb      # Phase 2 RegNet transfer learning fine-tuning
+├── tests/                                     # Automated test suite (43 unit tests)
+│   ├── test_foundation.py                     # Data loader, splits, checksums & evaluation
+│   ├── test_features.py                       # Pixel & HOG extraction and caching tests
+│   ├── test_logreg.py                         # LogReg pipeline & metric serialization
+│   ├── test_knn.py                            # k-NN pipeline, batching & distance tests
+│   ├── test_svm.py                            # SVM pipeline, tuning & error helpers
+│   ├── test_master_notebook.py                # Master comparison table integrity tests
+│   └── test_cnn.py                            # PyTorch forward/backward pass & ablation tests
+├── reports/                                   # Phase 1 artifacts & publications
+│   ├── error_analysis.md                      # Phase 1 error report defining "The Gap"
+│   ├── technical_report.tex                   # Phase 1 IEEE Conference Paper (LaTeX)
+│   ├── technical_report.pdf                   # Compiled Phase 1 Technical Report
+│   ├── figures/                               # Phase 1 exported figures (EDA, features, models)
+│   └── results/                               # 8 Phase 1 standardized JSON metric records
+└── phase2_reports/                            # Phase 2 artifacts & publications
+    ├── phase2_error_analysis.md               # Phase 2 comprehensive error analysis report
+    ├── latex_report/                          # Phase 2 IEEE Technical Report (Conference Paper)
+    │   ├── main.tex                           # Overleaf-ready LaTeX source with full tables
+    │   ├── references.bib                     # Verified BibTeX bibliography
+    │   └── figures/                           # Bundled high-resolution figures
+    ├── latex_report.zip                       # 1-Click ready-to-upload Overleaf archive
+    ├── figures/                               # Phase 2 training curves & confusion comparisons
+    └── results/                               # Standardized Phase 2 JSON metric records
+        ├── cnn_simple.json                    # SimpleCNN evaluation results
+        ├── cnn_deep.json                      # DeepCNN evaluation results
+        ├── regnet_finetuned.json              # Fine-tuned RegNet evaluation results
+        └── ablation_study.json                # 5-condition ablation records
 ```
 
 ---
 
-## 6. Getting Started
+## 6. Installation & Environment Setup
+
+### 6.1. Clone Repository & Setup Virtual Environment
 
 ```bash
 # Clone the repository
 git clone https://github.com/anantjain-afk/Image-Tagging.git
 cd Image-Tagging
 
-# Create and activate Python virtual environment
+# Create virtual environment with Python 3.10+
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows PowerShell: .\.venv\Scripts\Activate.ps1
 
-# Install dependencies in editable mode
+# Upgrade pip and install dependencies
+pip install --upgrade pip
 pip install -r requirements.txt
 pip install -e . --no-deps
 ```
 
-### Verify the shared data pipeline
-
-Run from the repository root after activating `.venv`:
+### 6.2. Verify Environment & PyTorch Setup
 
 ```bash
-python -c "from aml.data import get_train_val_test_splits; d = get_train_val_test_splits(); print('X_train:', d['X_train'].shape, 'X_val:', d['X_val'].shape, 'X_test:', d['X_test'].shape)"
+python -c "import torch, torchvision, sklearn; print('PyTorch:', torch.__version__, '| Torchvision:', torchvision.__version__, '| Device:', 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')"
 ```
 
-Expected: `X_train: (48000, 28, 28) X_val: (12000, 28, 28) X_test: (10000, 28, 28)`.
-The first call downloads the official IDX files from
-[Zalando's Fashion-MNIST repository](https://github.com/zalandoresearch/fashion-mnist)
-and verifies the published checksums. Later calls use
-`data/raw/fashion_mnist_raw.npz` offline. Images are `float32` in `[0, 1]`;
-labels are `int64`. Keep the official test set held out during model selection.
-Refit the selected configuration on `X_train_full`/`y_train_full` before final testing.
+---
 
-Run the offline foundation checks without downloading the dataset:
+## 7. How to Run Everything
+
+### 7.1. Run the Automated Unit Test Suite (43 Tests)
+To verify data pipeline integrity, feature shapes, metric serialization, and PyTorch model gradient flows:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
+*Expected: 43 tests pass cleanly with `OK`.*
 
-### Shared evaluation helpers
-
-```python
-from aml.evaluation import compute_metrics, count_parameters, measure_inference_latency
-
-metrics = compute_metrics(y_test, model.predict(X_test_features))
-latency_ms = measure_inference_latency(model, X_test_features[:1000])
-```
-
-`compute_metrics` returns JSON-ready accuracy, macro F1, ten per-class recalls,
-and a 10-by-10 confusion matrix in the class order above. Macro F1 always averages
-all ten classes; undefined scores are zero. `count_parameters(model)` counts
-linear coefficients plus intercepts, or total random-forest nodes, and accepts
-fitted pipelines. For k-NN, report stored feature memory in **MiB**
-(`X_train_full_features.nbytes / 1024**2`), matching the k-NN guide's calculation.
-The legacy JSON field `parameter_count` therefore means weights for linear models,
-nodes for forests, and MiB for k-NN; these quantities are not directly comparable.
-
-Latency is the median of five warmed-up `predict` calls, divided by the batch size.
-Use the same hardware and 1,000-image batches for comparisons. Pipeline preprocessing
-is included; separately computed Pixels/HOG extraction is excluded.
-
-### Master comparison notebook
+### 7.2. Verify Data Pipeline & Precompute Feature Cache
+Download official Fashion-MNIST binaries with automatic checksum validation and precompute HOG/pixel caches:
 
 ```bash
+# Check splits: 48,000 train / 12,000 val / 10,000 test
+python -c "from aml.data import get_train_val_test_splits; d = get_train_val_test_splits(); print('Splits OK:', [v.shape for k, v in d.items() if 'X_' in k])"
+
+# Precompute offline feature cache (saves time across notebooks)
+python src/aml/features.py
+```
+
+### 7.3. Run Phase 1 AML Experiments
+Open and execute the individual Jupyter notebooks in order:
+```bash
+jupyter lab notebooks/01_exploratory_data_analysis.ipynb
+jupyter lab notebooks/02_feature_exploration.ipynb
+jupyter lab notebooks/03_logistic_regression.ipynb
+jupyter lab notebooks/04_knn_experiments.ipynb
+jupyter lab notebooks/05_random_forest.ipynb
+jupyter lab notebooks/06_svm_and_error_analysis.ipynb
 jupyter lab notebooks/00_master_aml_comparison.ipynb
 ```
 
-Run all cells from either the repository root or `notebooks/`. The notebook checks
-the eight expected JSON files in `reports/results/`, displays missing contributions,
-and renders the final table, grouped charts, and findings when all eight are valid.
-It reads reported results only; it does not train models or reevaluate the test set.
-Final synthesis remains pending until the model owners provide their results.
+### 7.4. Run Phase 2 Deep Learning Experiments
+```bash
+# Model Benchmarks: Train SimpleCNN and DeepCNN
+jupyter lab notebooks/07_cnn_experiments.ipynb
+
+# Controlled 5-Variable Ablation Study
+jupyter lab notebooks/08_ablation_study.ipynb
+
+# Hybrid Innovation: RegNet-Y-400MF Transfer Learning
+jupyter lab notebooks/09_regnet_transfer_learning.ipynb
+```
+
+### 7.5. Generate Phase 2 Figures & Error Visualizations
+```bash
+python phase2_reports/figures/gen_figures.py
+```
+*Generates `aml_vs_cnn_confusion.png` and `shirt_recovery_gallery.png` in `phase2_reports/figures/`.*
+
+### 7.6. Compile the IEEE LaTeX Technical Report
+The complete IEEE conference paper comparing Phase 1 and Phase 2 is packaged in `phase2_reports/latex_report/`:
+
+- **Option A (Overleaf — Recommended):**
+  1. Go to [Overleaf](https://www.overleaf.com) $\to$ **New Project** $\to$ **Upload Project**.
+  2. Upload [`phase2_reports/latex_report.zip`](phase2_reports/latex_report.zip).
+  3. Ensure compiler is set to **pdfLaTeX** and main document is **`main.tex`**.
+  4. Click **Recompile**.
+- **Option B (Local TeX Live):**
+  ```bash
+  cd phase2_reports/latex_report
+  pdflatex main.tex
+  bibtex main
+  pdflatex main.tex
+  pdflatex main.tex
+  ```
+
+---
+
+## 8. License & Attribution
+
+This project was developed for **Course Project 11, Section D** at our institution.  
+- **Dataset:** [Fashion-MNIST](https://github.com/zalandoresearch/fashion-mnist) is provided by Zalando Research under the [MIT License](https://github.com/zalandoresearch/fashion-mnist/blob/master/LICENSE).
+- **Codebase:** Distributed under the MIT License. See individual files for licensing notices.
